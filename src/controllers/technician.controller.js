@@ -1,5 +1,7 @@
 const Technician = require("../models/technician.model");
 const User = require("../models/user.model");
+const Group = require("../models/group.model");
+const Project = require("../models/project.model");
 
 const create = async (req, res) => {
   try {
@@ -10,17 +12,16 @@ const create = async (req, res) => {
     if (!user) {
       throw new Error("Invalid user");
     }
-    const newTechnician = await Technician.create({ ...req.body, user: user._id });
+    const newTechnician = await Technician.create({
+      ...req.body,
+      user: user._id,
+    });
 
-    // await User.updateOne(
-    //   { _id: user._id },
-    //   {
-    //     $push: { projectId: newProject },
-    //   }
-    // );
-    res
-      .status(200)
-      .json({ ok: true, message: "newTechnician created", data: newTechnician });
+    res.status(200).json({
+      ok: true,
+      message: "newTechnician created",
+      data: newTechnician,
+    });
   } catch (err) {
     console.log(err);
     res
@@ -39,11 +40,7 @@ const list = async (req, res) => {
       throw new Error("Invalid user");
     }
 
-    const technicians = await Technician.find({ user: userId })
-    // .populate(
-    //   "Favs",
-    //   "title description link"
-    // );
+    const technicians = await Technician.find({ user: userId });
 
     res
       .status(200)
@@ -64,11 +61,7 @@ const show = async (req, res) => {
     if (!user) {
       throw new Error("Invalid user");
     }
-    const technician = await Technician.findById(id)
-    // .populate(
-    //   "Favs",
-    //   "title description link"
-    // );
+    const technician = await Technician.findById(id);
 
     if (technician.user.toString() !== user._id.toString()) {
       throw new Error("technician does not belong to this user");
@@ -99,23 +92,73 @@ const destroy = async (req, res) => {
     if (technician.user.toString() !== user._id.toString()) {
       throw new Error("technician does not belong to this user");
     }
-    
+    if (technician.projectId) {
+      const project = await Project.findById(technician.projectId);
+
+      const groups = await Group.find({ projectId: project._id });
+      const group = groups.find((item) =>
+        item.techniciansId.includes(technician._id)
+      );
+
+      await Group.updateOne(
+        { _id: group._id },
+        {
+          $pull: {
+            techniciansId: technician._id,
+          },
+        }
+      );
+    }
     await Technician.findByIdAndDelete(technician._id);
-    // await User.updateOne(
-    //   { _id: user._id },
-    //   {
-    //     $pull: { projectId: project._id },
-    //   }
-    // );
 
     res
       .status(200)
       .json({ ok: true, message: "technician deleted", data: technician });
   } catch (err) {
     console.log(err);
-    res
-      .status(404)
-      .json({ ok: false, message: "technician could not be deleted", data: err });
+    res.status(404).json({
+      ok: false,
+      message: "technician could not be deleted",
+      data: err,
+    });
+  }
+};
+
+const update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("Invalid user");
+    }
+    const technician = await Technician.findById(id);
+
+    if (technician.user.toString() !== user._id.toString()) {
+      throw new Error("technician does not belong to this user");
+    }
+
+    const technicianUpdate = await Technician.findByIdAndUpdate(
+      technician._id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+        context: "query",
+      }
+    );
+    res.status(200).json({
+      ok: true,
+      message: "technician updated",
+      data: technicianUpdate,
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      message: "technician could not be update",
+      data: err.message,
+    });
   }
 };
 
@@ -124,4 +167,5 @@ module.exports = {
   list,
   show,
   destroy,
+  update,
 };

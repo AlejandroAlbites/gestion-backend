@@ -10,31 +10,31 @@ const groupSchema = new Schema(
     },
     description: {
       type: String,
-      required: [true, "description is required"],
-      minlength: 4,
-      maxlength: 30,
+      // required: [true, "description is required"],
+      // minlength: 4,
+      // maxlength: 30,
     },
     status: {
       type: String,
-      default: 'stand-by',
+      default: "En espera",
     },
     score: {
-        type: Array,
-      },
+      type: Array,
+    },
     tasks: {
-        type: Array,
-      },
+      type: Array,
+    },
     statistics: {
-        type: Array,
-      },
+      type: Array,
+    },
     techniciansId: {
-        type: [Schema.Types.ObjectId],
-        ref: "Group",
-      },
+      type: [Schema.Types.ObjectId],
+      ref: "Technician",
+    },
     projectId: {
-        type: String,
-        required: [true, "User is required to create a Project"],
-      },
+      type: String,
+      required: [true, "User is required to create a Project"],
+    },
   },
   {
     timestamps: true,
