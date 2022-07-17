@@ -9,8 +9,9 @@ const projectSchema = new Schema(
       maxlength: 20,
     },
     status: {
-        type: String,
-      },
+      type: String,
+      default: "No Iniciado",
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -21,9 +22,9 @@ const projectSchema = new Schema(
       ref: "Group",
     },
     techniciansId: {
-        type: [Schema.Types.ObjectId],
-        ref: "Technician",
-      },
+      type: [Schema.Types.ObjectId],
+      ref: "Technician",
+    },
   },
   {
     timestamps: true,

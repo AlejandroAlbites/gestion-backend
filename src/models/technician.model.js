@@ -17,28 +17,45 @@ const technicianSchema = new Schema(
     image: {
       type: String,
       default:
-        'https://ceslava.s3-accelerate.amazonaws.com/2016/04/mistery-man-gravatar-wordpress-avatar-persona-misteriosa.png',
+        "https://ceslava.s3-accelerate.amazonaws.com/2016/04/mistery-man-gravatar-wordpress-avatar-persona-misteriosa.png",
     },
     available: {
       type: String,
-      default: 'available',
+      default: "available",
     },
     role: {
       type: String,
       required: [true, "role is required"],
     },
+    dni: {
+      type: String,
+      required: [true, "dni is required"],
+      minlength: 8,
+      maxlength: 10,
+    },
     statistics: {
-        type: Array,
-      },
+      type: Array,
+      required: [true, "statistics is required"],
+    },
+    skills: {
+      type: Array,
+      default: [
+        "Conocimiento",
+        "Velocidad",
+        "Liderazgo",
+        "Sociabilidad",
+        "Responsabilidad",
+      ],
+    },
     user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "User is required to create a Technician"],
-      },
-    // projectId: {
-    //     type: String,
-    //     required: [true, "User is required to create a Project"],
-    //   },
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User is required to create a Technician"],
+    },
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+    },
   },
   {
     timestamps: true,

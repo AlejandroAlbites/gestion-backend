@@ -14,9 +14,11 @@ const validateJWT = (req, res, next) => {
       throw new Error("Your sesion expired");
     }
 
-    const { _id } = jwt.verify(token, process.env.SECRET_JWT_SEED);
+    const { _id, name, email } = jwt.verify(token, process.env.SECRET_JWT_SEED);
 
     req.userId = _id;
+    req.name = name;
+    req.email = email;
 
     next();
   } catch (err) {

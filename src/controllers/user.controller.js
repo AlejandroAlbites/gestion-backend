@@ -15,7 +15,7 @@ const register = async (req, res) => {
 
     const user = await User.create({ ...req.body, password: encryptPassword });
 
-    const token = await generateJWT(user._id);
+    const token = await generateJWT(user._id, user.name, user.email);
 
     res.status(200).json({
       ok: true,
@@ -51,7 +51,7 @@ const login = async (req, res) => {
         .json({ ok: false, message: "the email or password is not correct" });
     }
 
-    const token = await generateJWT(user._id);
+    const token = await generateJWT(user._id, user.name, user.email);
 
     res.status(200).json({
       ok: true,
@@ -68,7 +68,47 @@ const login = async (req, res) => {
   }
 };
 
+const show = async (req, res) => {
+  try {
+    const { userId } = req;
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    res.status(200).json({
+      ok: true,
+      message: "User found",
+      data: user,
+    });
+  } catch (err) {
+    res.status(404).json({
+      ok: false,
+      message: "User not found",
+      data: err,
+    });
+  }
+};
+
+// GET - REVALIDAR EL TOKEN
+
+const tokenRevalidate = async (req, res) => {
+  const { userId } = req;
+
+  // Generar el JWT
+
+  const token = await generateJWT(userId);
+  res.status(200).json({
+    ok: true,
+    message: "token revalidated",
+    token,
+    userId,
+  });
+};
+
 module.exports = {
   register,
   login,
+  tokenRevalidate,
+  show,
 };
