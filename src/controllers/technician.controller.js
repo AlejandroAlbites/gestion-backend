@@ -92,23 +92,7 @@ const destroy = async (req, res) => {
     if (technician.user.toString() !== user._id.toString()) {
       throw new Error("technician does not belong to this user");
     }
-    if (technician.projectId) {
-      const project = await Project.findById(technician.projectId);
 
-      const groups = await Group.find({ projectId: project._id });
-      const group = groups.find((item) =>
-        item.techniciansId.includes(technician._id)
-      );
-
-      await Group.updateOne(
-        { _id: group._id },
-        {
-          $pull: {
-            techniciansId: technician._id,
-          },
-        }
-      );
-    }
     await Technician.findByIdAndDelete(technician._id);
 
     res

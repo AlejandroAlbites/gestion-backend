@@ -35,6 +35,11 @@ const groupSchema = new Schema(
       type: String,
       required: [true, "User is required to create a Project"],
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User is required to create a group"],
+    },
   },
   {
     timestamps: true,

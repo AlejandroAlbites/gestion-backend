@@ -14,4 +14,6 @@ router.get("/technician/:id", validateJWT, show);
 router.delete("/technician/:id", validateJWT, destroy);
 router.put("/technician/:id", validateJWT, update);
 
+
+
 module.exports = router;

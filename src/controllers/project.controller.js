@@ -2,6 +2,7 @@ const Project = require("../models/project.model");
 const User = require("../models/user.model");
 const Group = require("../models/group.model");
 const Technician = require("../models/technician.model");
+const Status = require("../models/status.model");
 
 const create = async (req, res) => {
   try {
@@ -20,6 +21,15 @@ const create = async (req, res) => {
         $push: { projectId: newProject },
       }
     );
+
+    await Status.create({
+      title: "En espera",
+      projectId: newProject,
+    });
+    await Status.create({
+      title: "En ejecución",
+      projectId: newProject,
+    });
     res
       .status(200)
       .json({ ok: true, message: "project created", data: newProject });
@@ -99,18 +109,32 @@ const destroy = async (req, res) => {
     }
     // eliminacion en cascada
     const groups = await Group.find({ projectId: project._id });
+    const technicians = await Technician.find({ projectId: project._id });
+    const status = await Status.find({ projectId: project._id });
 
+    if (status.length > 0) {
+      await Status.deleteMany({ projectId: project._id });
+    }
     if (groups.length > 0) {
       await Group.deleteMany({ projectId: project._id });
     }
-    await Project.findByIdAndDelete(project._id);
+
+    if (technicians.length > 0) {
+      await Technician.updateMany(
+        { projectId: project._id },
+        {
+          projectId: null,
+          groupId: null,
+        }
+      );
+    }
     await User.updateOne(
       { _id: user._id },
       {
         $pull: { projectId: project._id },
       }
     );
-
+    await Project.findByIdAndDelete(project._id);
     res
       .status(200)
       .json({ ok: true, message: "project deleted", data: project });
@@ -139,6 +163,19 @@ const getProjectId = async (req, res) => {
 
     const allGroups = await Group.find({ projectId: project._id });
     const allTechnicians = await Technician.find({ projectId: project._id });
+    const allStatus = await Status.find({ projectId: project._id });
+
+    let status = {};
+    allStatus.forEach((state) => {
+      status[state._id] = {
+        id: state._id.toString(),
+        title: state.title,
+        groupsIds:
+          state.groupsIds.length > 0
+            ? state.groupsIds.toString().split(",")
+            : state.groupsIds,
+      };
+    });
 
     let groups = {};
     allGroups.forEach((group) => {
@@ -160,50 +197,11 @@ const getProjectId = async (req, res) => {
       };
     });
 
-    const standByGroup = await Group.find({
-      status: "En espera",
-      projectId: project._id,
-    });
-    const standByGroupIds =
-      standByGroup.length > 0
-        ? standByGroup
-            .map((group) => group._id)
-            .toString()
-            .split(",")
-        : standByGroup.map((group) => group._id);
-
-    const runGroup = await Group.find({
-      status: "En ejecución",
-      projectId: project._id,
-    });
-    const runGroupIds =
-      runGroup.length > 0
-        ? runGroup
-            .map((group) => group._id)
-            .toString()
-            .split(",")
-        : runGroup.map((group) => group._id);
-
-    let status = {
-      "status-1": {
-        id: "status-1",
-        title: "En espera",
-        groupsIds: standByGroupIds,
-      },
-      "status-2": {
-        id: "status-2",
-        title: "En ejecución",
-        groupsIds: runGroupIds,
-      },
-    };
-
-    // Facilitate reordering of the status
-
     const initialState = {
       technicals,
       groups,
       status,
-      statusOrder: ["status-1", "status-2"],
+      statusOrder: [allStatus[0]._id.toString(), allStatus[1]._id.toString()],
       projectId: project._id,
     };
 
