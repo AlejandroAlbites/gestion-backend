@@ -106,9 +106,77 @@ const tokenRevalidate = async (req, res) => {
   });
 };
 
+const updateUser = async (req, res) => {
+  const { userId } = req;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("Invalid user");
+    }
+    delete req.body.email;
+
+    const userUpdated = await User.findByIdAndUpdate(userId, req.body, {
+      new: true,
+      runValidators: true,
+      context: "query",
+    });
+    res.status(200).json({
+      ok: true,
+      message: "User updated",
+      data: userUpdated,
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      message: "User could not be update",
+      data: err.message,
+    });
+  }
+};
+
+const changePassword = async (req, res) => {
+  const { userId } = req;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("Invalid user");
+    }
+    const validatePassword = await bcrypt.compare(
+      req.body.oldPassword,
+      user.password
+    );
+
+    if (!validatePassword) {
+      throw new Error("Password is incorrect");
+    }
+
+    const encryptPassword = await bcrypt.hash(req.body.repeatPassword, 8);
+
+    user.password = encryptPassword;
+    await user.save({ validateBeforeSave: false });
+
+    // await transporter.sendMail(passwordChanged(findUser));
+
+    res.status(200).json({
+      ok: true,
+      message: "User updated",
+      data: user,
+      password: encryptPassword,
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      message: "User could not be update",
+      data: err.message,
+    });
+  }
+};
 module.exports = {
   register,
   login,
   tokenRevalidate,
   show,
+  updateUser,
+  changePassword,
 };
