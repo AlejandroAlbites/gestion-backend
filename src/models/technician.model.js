@@ -55,6 +55,12 @@ const technicianSchema = new Schema(
     projectId: {
       type: Schema.Types.ObjectId,
       ref: "Project",
+      default: null,
+    },
+    groupId: {
+      type: Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
     },
   },
   {
